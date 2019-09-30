@@ -87,21 +87,23 @@ foreach ($dataset in $Datasets_WithoutMetrics)
                     $grp = $dataset.WorkspaceID.Guid
                     $dset = $dataset.DatasetId.Guid
                     $uri = "https://api.powerbi.com/v1.0/myorg/groups/$grp/datasets/$dset/refreshSchedule"
-                    $Invoke_Result = Invoke-PowerBIRestMethod -Url $uri –Method GET | ConvertFrom-Json | Select days,times
+                    $Invoke_Result = Invoke-PowerBIRestMethod -Url $uri –Method GET | ConvertFrom-Json | Select days,times,enabled
                     $days = ($Invoke_Result  | Select days).days
                     $times = ($Invoke_Result | Select times).times
+                    $enabled = ($Invoke_Result | Select enabled).enabled
                     
                     foreach($day in $days){
                                                 Write-Host "Day:" $day
                                 foreach ($time in $times){
                                                 Write-Host "Time:" $time
-                                                $result = "" | Select workspaceName,workspaceID,datasetName,datasetID,RefreshDate,RefreshTime
+                                                $result = "" | Select workspaceName,workspaceID,datasetName,datasetID,RefreshDate,RefreshTime,enabled
                                                 $result.workspaceName = $dataset.WorkspaceName
                                                 $result.WorkspaceID = $dataset.WorkspaceID
                                                 $result.DatasetName = $dataset.DatasetName
                                                 $result.DatasetID = $dataset.DatasetId
                                                 $result.RefreshDate = $day
                                                 $result.RefreshTime = $time
+                                                $result.enabled = $enabled
                                                 $result | Export-Csv refreshes.csv -Append -NoTypeInformation
                                                         }
                                               }
