@@ -15,6 +15,7 @@ Power Bi scripts
    - Excel skills are requied to comapre result and get a list of refreshes per day/time
 
    What scrip will give you:
+   
     1. List of workspaces on the node
     2. List of datasets in a workspaces
     3. List of reports in workspace
