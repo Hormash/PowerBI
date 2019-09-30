@@ -20,3 +20,92 @@ Power Bi scripts
     2. List of datasets in a workspaces
     3. List of reports in workspace
     4. List of refreshes per dataser
+
+
+
+# Connect to PowerBI
+Connect-PowerBIServiceAccount
+
+# Capacity
+$capacityID = 'abcdefgh-0000-0000-0000-abcdefgh'
+
+# List of workspaces on the node
+$CapacityWorkspace = Get-PowerBIWorkspace -All -Scope Organization | Where-Object {$_.CapacityId -eq $capacityID}
+write-Host "Number of workspaces in capacity:" $CapacityWorkspace.Count
+
+# List of datasets in a workspaces
+$AllDatasets = ""
+$i=0
+foreach($workspace in $CapacityWorkspace)
+                                        {
+    $i++
+    Write-Host "Working on Workspace:" $workspace.name " | Count:" $i "from:" $CapacityWorkspace.count
+    $result = Get-PowerBIDataSet -WorkspaceId $workspace.Id
+                foreach($rst in $result)
+                                {
+                                    $line = "" | Select WorkspaceID,WorkspaceName,DatasetId,DatasetName,IsRefreshable,IsOnPremGatewayRequired,ConfiguredBy
+                                    $line.WorkspaceID = $workspace.Id
+                                    $line.WorkspaceName = $workspace.Name
+                                    $line.DatasetId = $rst.Id
+                                    $line.DatasetName = $rst.Name
+                                    $line.IsRefreshable = $rst.IsRefreshable
+                                    $line.IsOnPremGatewayRequired = $rst.IsOnPremGatewayRequired
+                                    $line.ConfiguredBy = $rst.ConfiguredBy
+                                    [array]$AllDatasets += $line
+                                }
+                                       }
+
+# List of reports in workspace
+$AllReports = ""
+$i=0
+foreach($workspace in $CapacityWorkspace)
+                                        {
+    $i++
+    Write-Host "Working on Workspace:" $workspace.name " | Count:" $i "from:" $CapacityWorkspace.count
+    $result = Get-PowerBIReport -WorkspaceId $workspace.Id
+                foreach($rst in $result)
+                                {
+                                    $line = "" | Select WorkspaceID,WorkspaceName,DatasetId,ReportId,ReportName
+                                    $line.WorkspaceID = $workspace.Id
+                                    $line.WorkspaceName = $workspace.Name
+                                    $line.ReportId = $rst.id
+                                    $line.ReportName = $rst.Name
+                                    $line.DatasetId = $rst.DatasetId
+                                    [array]$AllReports += $line
+                                }
+                                        }
+
+
+
+# List of refreshes per dataset
+$i=0
+$Datasets_WithoutMetrics = $AllDatasets | Where-Object {$_.DatasetName -notlike '*Usage Metrics*'}
+foreach ($dataset in $Datasets_WithoutMetrics)
+            {
+                    $i++
+                    Write-Host "Dataset:" $dataset.DatasetName
+                    Write-Host "Count:" $i "of" $Datasets_WithoutMetrics.Count
+                    $grp = $dataset.WorkspaceID.Guid
+                    $dset = $dataset.DatasetId.Guid
+                    $uri = "https://api.powerbi.com/v1.0/myorg/groups/$grp/datasets/$dset/refreshSchedule"
+                    $Invoke_Result = Invoke-PowerBIRestMethod -Url $uri –Method GET | ConvertFrom-Json | Select days,times
+                    $days = ($Invoke_Result  | Select days).days
+                    $times = ($Invoke_Result | Select times).times
+                    
+                    foreach($day in $days){
+                                                Write-Host "Day:" $day
+                                foreach ($time in $times){
+                                                Write-Host "Time:" $time
+                                                $result = "" | Select workspaceName,workspaceID,datasetName,datasetID,RefreshDate,RefreshTime
+                                                $result.workspaceName = $dataset.WorkspaceName
+                                                $result.WorkspaceID = $dataset.WorkspaceID
+                                                $result.DatasetName = $dataset.DatasetName
+                                                $result.DatasetID = $dataset.DatasetId
+                                                $result.RefreshDate = $day
+                                                $result.RefreshTime = $time
+                                                $result | Export-Csv refreshes.csv -Append -NoTypeInformation
+                                                        }
+                                              }
+            }
+
+Write-Host "Script is finished"
