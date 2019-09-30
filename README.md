@@ -5,9 +5,7 @@ Power Bi scripts
     Puropse of this script is to get all refresh times for all workspaces in dedicated capacity. As we know, at the momnet, 
     there is no easy tool to present at what time, what dataset is refreshing and at what time.
     With this script we can get a list of workspaces, datasets and time when it's set to refresh.
-
-    Using Excel and simple COUNTIF we are able to calculate number of refreshes each data at given time.
-    
+   
    Requirements:
    - PowerBI PowerShell module
      https://docs.microsoft.com/en-us/powershell/power-bi/overview?view=powerbi-ps
